@@ -2,10 +2,6 @@ import subprocess
 import platform
 import os
 
-
-
-
-
 def capture():
     curDirWorking = os.getcwd()
     fileBat = curDirWorking + "\\tshark.bat"
