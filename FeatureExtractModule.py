@@ -70,23 +70,39 @@ class HandlePcap:
                 i += 1
         return protocol
 
-    # 6 - Get number of packets to dst_ip per protocol
-    def get_packets(self, protocol, dst_ip, pcap):
+    # 6 - Get number of packet has same source ip
+    def get_src_packets(self, protocol, src_ip, pcap):
+        num_packet = 0
+        for packet in pcap:
+            if protocol == self.get_protocol(packet) and src_ip == self.get_src_ip(packet, protocol):
+                num_packet += 1
+        return str(num_packet)
+
+    # 7 - Get number of packets to dst_ip per protocol
+    def get_dst_packets(self, protocol, dst_ip, pcap):
         num_packet = 0
         for packet in pcap:
             if protocol == self.get_protocol(packet) and dst_ip == self.get_dst_ip(packet, protocol):
                 num_packet += 1
         return str(num_packet)
 
-    # 7 - Get number of bytes to dst_ip per protocol
-    def get_bytes(self, protocol, dst_ip, pcap):
+    # 8 - get number of bytes from src_ip
+    def get_src_bytes(self, protocol, src_ip, pcap):
+        bytes = 0
+        for packet in pcap:
+            if protocol == self.get_protocol(packet) and src_ip == self.get_src_ip(packet, protocol):
+                bytes += int(packet.frame_info.len)
+        return str(bytes)
+
+    # 9 - Get number of bytes to dst_ip per protocol
+    def get_dst_bytes(self, protocol, dst_ip, pcap):
         bytes = 0
         for packet in pcap:
             if protocol == self.get_protocol(packet) and dst_ip == self.get_dst_ip(packet, protocol):
                 bytes += int(packet.frame_info.len)
         return str(bytes)
 
-    # 8 - Count same src_ip, src_port  to difference dst_ip, dst_port
+    # 10 - Count same src_ip, src_port  to difference dst_ip, dst_port
     def get_ssrc_diff_dst(self, protocol, src_ip, src_port, dst_ip, dst_port, pcap):
         count = 0
         for packet in pcap:
@@ -96,7 +112,7 @@ class HandlePcap:
                 count += 1
         return str(count)
 
-    # 9 - Count diff src_ip, src_port  to same dst_ip, dst_port
+    # 11 - Count diff src_ip, src_port  to same dst_ip, dst_port
     def get_sdst_diff_src(self, protocol, src_ip, src_port, dst_ip, dst_port, pcap):
         count = 0
         for packet in pcap:
@@ -106,7 +122,7 @@ class HandlePcap:
                 count += 1
         return str(count)
 
-    # 10 - get Land
+    # 12 - get Land
     def get_land(self, protocol, src_ip, src_port, dst_ip, dst_port, pcap):
         count = 0
         for packet in pcap:
@@ -144,8 +160,10 @@ class HandlePcap:
                 dst_ip = self.get_dst_ip(packet, protocol)
                 src_port = self.get_src_port(packet, protocol)
                 dst_port = self.get_dst_port(packet, protocol)
-                num_packets = self.get_packets(protocol, dst_ip, pcap)
-                num_bytes = self.get_bytes(protocol, dst_ip, pcap)
+                num_src_packets = self.get_src_packets(protocol, src_ip, pcap)
+                num_dst_packets = self.get_dst_packets(protocol, dst_ip, pcap)
+                num_src_bytes = self.get_src_bytes(protocol, src_ip, pcap)
+                num_dst_bytes = self.get_dst_bytes(protocol, dst_ip, pcap)
                 num_ssrc_diff_dst = self.get_ssrc_diff_dst(protocol, src_ip, src_port, dst_ip, dst_port, pcap)
                 num_sdst_diff_src = self.get_sdst_diff_src(protocol, src_ip, src_port, dst_ip, dst_port, pcap)
                 num_land = self.get_land(protocol, src_ip, src_port, dst_ip, dst_port, pcap)
@@ -154,8 +172,10 @@ class HandlePcap:
                 featureStr += dst_ip + ","
                 featureStr += src_port + ","
                 featureStr += dst_port + ","
-                featureStr += num_packets + ","
-                featureStr += num_bytes + ","
+                featureStr += num_src_packets + ","
+                featureStr += num_dst_packets + ","
+                featureStr += num_src_bytes + ","
+                featureStr += num_dst_bytes + ","
                 featureStr += num_ssrc_diff_dst + ","
                 featureStr += num_sdst_diff_src + ","
                 featureStr += num_land + "\r\n"
