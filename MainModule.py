@@ -5,8 +5,8 @@ from multiprocessing import Process
 
 if __name__ == "__main__":
     try:
-        # processCapture = Process(target = CaptureModule.capture(), name=("processCapture"))
-        # processFeature = Process(target = FeatureExtractModule.featureExtract(), name=("processFeature"))
+        # processCapture = Process(target = CaptureModule.capture())
+        # processFeature = Process(target = FeatureExtractModule.featureExtract())
         processTest = Process(target=MyTestModule.featureExtract())
         # processCapture.start()
         # processFeature.start()

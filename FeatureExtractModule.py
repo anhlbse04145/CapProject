@@ -1,9 +1,12 @@
 import time
+from builtins import print
+
 import pyshark
 import glob
 import os
 import platform
 from threading import Thread
+
 
 class Protocol:
     protocol = {
@@ -11,6 +14,7 @@ class Protocol:
         "icmp" : "1",
         "udp" : "1",
     }
+
 
 class HandlePcap:
 
@@ -28,31 +32,33 @@ class HandlePcap:
         return False;
 
     # 1- Get Source ip
-    def get_src_ip(self, packet, protocol):
-        src_ip = ""
+    def get_src_ip(self, packet):
+        src_ip = 0
         if self.check_hasattr(packet, "ip"):
             src_ip = packet.ip.src_host
         return str(src_ip)
 
     # 2- Get Destination ip
-    def get_dst_ip(self, packet, protocol):
-        dst_ip = ""
+    def get_dst_ip(self, packet):
+        dst_ip = 0
         if self.check_hasattr(packet, "ip"):
             dst_ip = packet.ip.dst_host
         return str(dst_ip)
 
     # 3 - Get Source port
     def get_src_port(self, packet, protocol):
-        src_port = ""
+        src_port = 0
         if self.check_hasattr(packet, protocol):
-            src_port = packet[protocol].srcport
+            if self.check_hasattr(packet[protocol], "srcport"):
+                src_port = packet[protocol].srcport
         return str(src_port)
 
     # 4 - Get Destination port
     def get_dst_port(self, packet, protocol):
-        dst_port = ""
+        dst_port = 0
         if self.check_hasattr(packet, protocol):
-            dst_port = packet[protocol].dstport
+            if self.check_hasattr(packet[protocol], "dstport"):
+                dst_port = packet[protocol].dstport
         return str(dst_port)
 
     # 5- Get protocol
@@ -71,68 +77,43 @@ class HandlePcap:
         return protocol
 
     # 6 - Get number of packet has same source ip
-    def get_src_packets(self, protocol, src_ip, pcap):
-        num_packet = 0
-        for packet in pcap:
-            if protocol == self.get_protocol(packet) and src_ip == self.get_src_ip(packet, protocol):
-                num_packet += 1
-        return str(num_packet)
-
     # 7 - Get number of packets to dst_ip per protocol
-    def get_dst_packets(self, protocol, dst_ip, pcap):
-        num_packet = 0
-        for packet in pcap:
-            if protocol == self.get_protocol(packet) and dst_ip == self.get_dst_ip(packet, protocol):
-                num_packet += 1
-        return str(num_packet)
-
     # 8 - get number of bytes from src_ip
-    def get_src_bytes(self, protocol, src_ip, pcap):
-        bytes = 0
-        for packet in pcap:
-            if protocol == self.get_protocol(packet) and src_ip == self.get_src_ip(packet, protocol):
-                bytes += int(packet.frame_info.len)
-        return str(bytes)
-
     # 9 - Get number of bytes to dst_ip per protocol
-    def get_dst_bytes(self, protocol, dst_ip, pcap):
-        bytes = 0
-        for packet in pcap:
-            if protocol == self.get_protocol(packet) and dst_ip == self.get_dst_ip(packet, protocol):
-                bytes += int(packet.frame_info.len)
-        return str(bytes)
-
     # 10 - Count same src_ip, src_port  to difference dst_ip, dst_port
-    def get_ssrc_diff_dst(self, protocol, src_ip, src_port, dst_ip, dst_port, pcap):
-        count = 0
-        for packet in pcap:
-            if src_ip == self.get_src_ip(packet, protocol) and src_port == self.get_src_port(packet, protocol) \
-                    and (
-                    dst_ip != self.get_dst_ip(packet, protocol) or dst_port != self.get_dst_port(packet, protocol)):
-                count += 1
-        return str(count)
-
     # 11 - Count diff src_ip, src_port  to same dst_ip, dst_port
-    def get_sdst_diff_src(self, protocol, src_ip, src_port, dst_ip, dst_port, pcap):
-        count = 0
-        for packet in pcap:
-            if dst_ip == self.get_dst_ip(packet, protocol) and dst_port == self.get_dst_port(packet, protocol) \
-                    and (
-                    src_ip != self.get_src_ip(packet, protocol) or src_port != self.get_src_port(packet, protocol)):
-                count += 1
-        return str(count)
-
     # 12 - get Land
-    def get_land(self, protocol, src_ip, src_port, dst_ip, dst_port, pcap):
-        count = 0
-        for packet in pcap:
-            if src_ip == self.get_src_ip(packet, protocol) and src_port == self.get_src_port(packet, protocol) \
-                    and dst_ip == self.get_dst_ip(packet, protocol) and dst_port == self.get_dst_port(packet, protocol):
-                count += 1
-        return str(count)
+    def get_calculate_feature(self, protocol, src_ip, src_port, dst_ip, dst_port, temp_pcap):
+        src_packets = 0
+        dst_packets = 0
+        src_bytes = 0
+        dst_bytes = 0
+        ssrc_diff_dst = 0
+        sdst_diff_src = 0
+        land = 0
+        for packet in temp_pcap:
+            if protocol == self.get_protocol(packet) and src_ip == self.get_src_ip(packet):
+                src_packets += 1
+            if protocol == self.get_protocol(packet) and dst_ip == self.get_dst_ip(packet):
+                dst_packets += 1
+            if protocol == self.get_protocol(packet) and src_ip == self.get_src_ip(packet):
+                src_bytes += int(packet.frame_info.len)
+            if protocol == self.get_protocol(packet) and dst_ip == self.get_dst_ip(packet):
+                dst_bytes += int(packet.frame_info.len)
+            if src_ip == self.get_src_ip(packet) and src_port == self.get_src_port(packet, protocol) \
+                    and (
+                    dst_ip != self.get_dst_ip(packet) or dst_port != self.get_dst_port(packet, protocol)):
+                ssrc_diff_dst += 1
+            if dst_ip == self.get_dst_ip(packet) and dst_port == self.get_dst_port(packet, protocol) \
+                    and (
+                    src_ip != self.get_src_ip(packet) or src_port != self.get_src_port(packet, protocol)):
+                sdst_diff_src += 1
+            if src_ip == self.get_src_ip(packet) and src_ip == self.get_dst_ip(packet) \
+                    and src_port == self.get_src_port(packet, protocol) and src_port == self.get_dst_port(packet, protocol):
+                land += 1
+        return str(src_packets) + "," + str(dst_packets) + "," + str(src_bytes) + "," + str(dst_bytes) + "," + str(ssrc_diff_dst) + "," + str(sdst_diff_src) + "," + str(land)
 
     def get_extract_path(self, src_path):
-        list = []
         fileExtract = ""
         if platform.system() == "Windows":
             list = src_path.split("\\")
@@ -145,47 +126,54 @@ class HandlePcap:
         return fileExtract
 
     def getFeature(self, src_path):
-
+        i = 0
         FILEPATH = src_path
+        print("Start: " + FILEPATH)
         FILE_EXTRACT_PATH = self.get_extract_path(FILEPATH)
         pcap = pyshark.FileCapture(FILEPATH)
-        pcap.load_packets()
         featureTotal = ""
-        mySet = set()
-        if len(pcap) > 0:
-            for packet in pcap:
+        featureSet = set()
+        for packet in pcap:
+            temp_pcap = pcap
+            i += 1
+            print(i)
+            protocol = self.get_protocol(packet)
+            if protocol != "other":
                 featureStr = ""
-                protocol = self.get_protocol(packet)
-                src_ip = self.get_src_ip(packet, protocol)
-                dst_ip = self.get_dst_ip(packet, protocol)
+                featureStrTuple = ""
+                src_ip = self.get_src_ip(packet)
+                dst_ip = self.get_dst_ip(packet)
                 src_port = self.get_src_port(packet, protocol)
                 dst_port = self.get_dst_port(packet, protocol)
-                num_src_packets = self.get_src_packets(protocol, src_ip, pcap)
-                num_dst_packets = self.get_dst_packets(protocol, dst_ip, pcap)
-                num_src_bytes = self.get_src_bytes(protocol, src_ip, pcap)
-                num_dst_bytes = self.get_dst_bytes(protocol, dst_ip, pcap)
-                num_ssrc_diff_dst = self.get_ssrc_diff_dst(protocol, src_ip, src_port, dst_ip, dst_port, pcap)
-                num_sdst_diff_src = self.get_sdst_diff_src(protocol, src_ip, src_port, dst_ip, dst_port, pcap)
-                num_land = self.get_land(protocol, src_ip, src_port, dst_ip, dst_port, pcap)
-                featureStr += protocol + ","
+
+                featureStrTuple += src_ip + ","
+                featureStrTuple += dst_ip + ","
+                featureStrTuple += src_port + ","
+                featureStrTuple += dst_port + ","
+                featureStrTuple += protocol + ","
+
+                if featureStrTuple not in featureSet:
+                    featureSet.add(featureStrTuple)
+                else:
+                    continue
+
+                calcu_feature = self.get_calculate_feature(protocol, src_ip, src_port, dst_ip, dst_port, temp_pcap)
+
                 featureStr += src_ip + ","
                 featureStr += dst_ip + ","
                 featureStr += src_port + ","
                 featureStr += dst_port + ","
-                featureStr += num_src_packets + ","
-                featureStr += num_dst_packets + ","
-                featureStr += num_src_bytes + ","
-                featureStr += num_dst_bytes + ","
-                featureStr += num_ssrc_diff_dst + ","
-                featureStr += num_sdst_diff_src + ","
-                featureStr += num_land + "\r\n"
-                if featureStr not in mySet:
-                    mySet.add(featureStr)
-                    featureTotal += featureStr
+                featureStr += protocol + ","
+                featureStr += calcu_feature
+                featureStr += "\n"
+                # if featureStr not in featureSet:
+                #     featureSet.add(featureStr)
+                featureTotal += featureStr
             f = open(FILE_EXTRACT_PATH, "w+")
             f.write(featureTotal)
             f.close()
-            pcap.close()
+        #     pcap.close()
+        print("Done: " + FILEPATH)
 
 
 def featureExtract():
