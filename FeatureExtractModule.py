@@ -74,6 +74,8 @@ class HandlePcap:
                     protocol = split[i]
                     break
                 i += 1
+        if protocol == None:
+            protocol = "other"
         return protocol
 
     # 6 - Get number of packet has same source ip
@@ -128,52 +130,55 @@ class HandlePcap:
     def getFeature(self, src_path):
         i = 0
         FILEPATH = src_path
-        print("Start: " + FILEPATH)
-        FILE_EXTRACT_PATH = self.get_extract_path(FILEPATH)
-        pcap = pyshark.FileCapture(FILEPATH)
-        featureTotal = ""
-        featureSet = set()
-        for packet in pcap:
-            temp_pcap = pcap
-            i += 1
-            print(i)
-            protocol = self.get_protocol(packet)
-            if protocol != "other":
-                featureStr = ""
-                featureStrTuple = ""
-                src_ip = self.get_src_ip(packet)
-                dst_ip = self.get_dst_ip(packet)
-                src_port = self.get_src_port(packet, protocol)
-                dst_port = self.get_dst_port(packet, protocol)
+        if os.path.getsize(FILEPATH) > 268:
+            print("Start: " + FILEPATH)
+            FILE_EXTRACT_PATH = self.get_extract_path(FILEPATH)
+            pcap = pyshark.FileCapture(FILEPATH)
+            featureTotal = ""
+            featureStr = ""
+            featureSet = set()
+            for packet in pcap:
+                temp_pcap = pcap
+                i += 1
+                print(i)
+                protocol = self.get_protocol(packet)
+                if protocol != "other":
+                    featureStr = ""
+                    featureStrTuple = ""
+                    src_ip = self.get_src_ip(packet)
+                    dst_ip = self.get_dst_ip(packet)
+                    src_port = self.get_src_port(packet, protocol)
+                    dst_port = self.get_dst_port(packet, protocol)
 
-                featureStrTuple += src_ip + ","
-                featureStrTuple += dst_ip + ","
-                featureStrTuple += src_port + ","
-                featureStrTuple += dst_port + ","
-                featureStrTuple += protocol + ","
+                    featureStrTuple += src_ip + ","
+                    featureStrTuple += dst_ip + ","
+                    featureStrTuple += src_port + ","
+                    featureStrTuple += dst_port + ","
+                    featureStrTuple += protocol + ","
 
-                if featureStrTuple not in featureSet:
-                    featureSet.add(featureStrTuple)
-                else:
-                    continue
+                    if featureStrTuple not in featureSet:
+                        featureSet.add(featureStrTuple)
+                    else:
+                        continue
 
-                calcu_feature = self.get_calculate_feature(protocol, src_ip, src_port, dst_ip, dst_port, temp_pcap)
+                    calcu_feature = self.get_calculate_feature(protocol, src_ip, src_port, dst_ip, dst_port, temp_pcap)
 
-                featureStr += src_ip + ","
-                featureStr += dst_ip + ","
-                featureStr += src_port + ","
-                featureStr += dst_port + ","
-                featureStr += protocol + ","
-                featureStr += calcu_feature
-                featureStr += "\n"
-                # if featureStr not in featureSet:
-                #     featureSet.add(featureStr)
-                featureTotal += featureStr
-            f = open(FILE_EXTRACT_PATH, "w+")
-            f.write(featureTotal)
-            f.close()
-        #     pcap.close()
-        print("Done: " + FILEPATH)
+                    featureStr += src_ip + ","
+                    featureStr += dst_ip + ","
+                    featureStr += src_port + ","
+                    featureStr += dst_port + ","
+                    featureStr += protocol + ","
+                    featureStr += calcu_feature
+                    featureStr += "\n"
+                    # if featureStr not in featureSet:
+                    #     featureSet.add(featureStr)
+                    featureTotal += featureStr
+            if featureTotal != "":
+                f = open(FILE_EXTRACT_PATH, "w+")
+                f.write(featureTotal)
+                f.close()
+            #     pcap.close()
+            print("Done: " + FILEPATH)
 
 
 def featureExtract():
@@ -187,15 +192,15 @@ def featureExtract():
         curDirWorking = os.getcwd() + "/PcapCapture/*"
     else:
         print("Sorry, we do not support your system")
-    while True:
-        # * means all if need specific format then *.pcap
-        list_of_files = glob.glob(curDirWorking)
-        if len(list_of_files) != 0:
-            latest_file = max(list_of_files, key=os.path.getctime)
-            if LASTFILE != latest_file:
-                LASTFILE = latest_file
-                time.sleep(2)
-                thread = Thread(target=handlePcap.getFeature(LASTFILE))
-                thread.start()
+    # while True:
+    # * means all if need specific format then *.pcap
+    list_of_files = glob.glob(curDirWorking)
+    if len(list_of_files) != 0:
+        latest_file = max(list_of_files, key=os.path.getctime)
+        if LASTFILE != latest_file:
+            LASTFILE = latest_file
+            time.sleep(2)
+            thread = Thread(target=handlePcap.getFeature(LASTFILE))
+            thread.start()
 
-        time.sleep(0.1)
+        # time.sleep(0.1)

@@ -13,7 +13,8 @@ def capture():
         p.communicate()
         print(p.returncode)  # is 0 if success
     elif platform.system() == "Linux":
-        p = subprocess.call(fileBash, shell=True)
+        os.system("gnome-terminal -x bash %s" %fileBash)
+        # p = subprocess.call(fileBash, creationflags=2, shell=True)
     else:
         print("Sorry, we do not support your system")
 
