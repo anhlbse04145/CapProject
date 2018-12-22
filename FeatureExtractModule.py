@@ -137,6 +137,8 @@ class HandlePcap:
             featureTotal = ""
             featureStr = ""
             featureSet = set()
+            # try:
+
             for packet in pcap:
                 temp_pcap = pcap
                 i += 1
@@ -179,6 +181,10 @@ class HandlePcap:
                 f.close()
             #     pcap.close()
             print("Done: " + FILEPATH)
+            # except:
+            #     pass
+        # else:
+        #     os.remove(FILEPATH)
 
 
 def featureExtract():
@@ -192,15 +198,15 @@ def featureExtract():
         curDirWorking = os.getcwd() + "/PcapCapture/*"
     else:
         print("Sorry, we do not support your system")
-    # while True:
+    while True:
     # * means all if need specific format then *.pcap
-    list_of_files = glob.glob(curDirWorking)
-    if len(list_of_files) != 0:
-        latest_file = max(list_of_files, key=os.path.getctime)
-        if LASTFILE != latest_file:
-            LASTFILE = latest_file
-            time.sleep(2)
-            thread = Thread(target=handlePcap.getFeature(LASTFILE))
-            thread.start()
+        list_of_files = glob.glob(curDirWorking)
+        if len(list_of_files) != 0:
+            latest_file = max(list_of_files, key=os.path.getctime)
+            if LASTFILE != latest_file:
+                LASTFILE = latest_file
+                time.sleep(1)
+                thread = Thread(target=handlePcap.getFeature(LASTFILE))
+                thread.start()
 
-        # time.sleep(0.1)
+        time.sleep(1)
