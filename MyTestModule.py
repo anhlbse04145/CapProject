@@ -1,15 +1,15 @@
 import time
 import datetime
-from struct import pack
-
 import pyshark
 import glob
 import os
 import platform
 from threading import Thread
 from builtins import print
+import pandas as pd
 import warnings
 import sys
+import predict
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -632,8 +632,7 @@ class HandlePcap:
                                 and int(pkt_1.acknowledgment_number) == sequence_number_ser+1:
                             return "True"
                 index_1 += 1
-            return "False"
-        return "None"
+        return "False"
 
 
     # 1- Get Source ip
@@ -904,12 +903,14 @@ class HandlePcap:
 
     def getFeature(self, src_path):
         FILEPATH = src_path
-        if os.path.getsize(FILEPATH) > 268:
+        print(FILEPATH)
+        if os.path.getsize(FILEPATH) > 360:
             print("Start: " + FILEPATH)
             print(datetime.datetime.now())
             FILE_EXTRACT_PATH = self.get_extract_path(FILEPATH)
             pcap = pyshark.FileCapture(FILEPATH)
             featureTotal = ""
+            featureTotalArray = []
             featureSet = set()
             featureSetFinal = set()
             packetList = []
@@ -988,20 +989,32 @@ class HandlePcap:
                     featureStr += "1" + ","
                 else:
                     featureStr += "0"
-                featureStr += "\n"
+                # featureStr += "\n"
 
                 if featureStr not in featureSetFinal:
                     featureSetFinal.add(featureStr)
                 else:
                     continue
 
+
+                featureArray = featureStr.split(",")
+                featureTotalArray.append(featureArray)
                 featureTotal += featureStr
 
-            f = open(FILE_EXTRACT_PATH, "w+")
-            f.write(featureTotal)
-            f.close()
-            print("Done: " + FILEPATH)
-            print(datetime.datetime.now())
+            if featureTotalArray != []:
+                print("Done: " + FILEPATH)
+                print(datetime.datetime.now())
+            # if featureTotal != "":
+            #     f = open(FILE_EXTRACT_PATH, "w+")
+            #     f.write(featureTotal)
+            #     f.close()
+            #     print("Done: " + FILEPATH)
+            #     print(datetime.datetime.now())
+
+            predict.predict(featureTotalArray)
+        else:
+            if os.path.exists(FILEPATH):
+                os.remove(FILEPATH)
 
 
 def featureExtract():
@@ -1022,8 +1035,9 @@ def featureExtract():
             latest_file = max(list_of_files, key=os.path.getctime)
             if LASTFILE != latest_file:
                 LASTFILE = latest_file
-                time.sleep(2)
+                # print(LASTFILE)
+                # time.sleep(2)
                 thread = Thread(target=handlePcap.getFeature(LASTFILE))
                 thread.start()
 
-        time.sleep(0.1)
+        time.sleep(2)

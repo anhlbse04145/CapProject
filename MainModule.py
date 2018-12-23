@@ -5,17 +5,17 @@ from multiprocessing import Process
 
 if __name__ == "__main__":
     try:
-        processCapture = Process(target = CaptureModule.capture(), name=("processCapture"))
+        # processCapture = Process(target = CaptureModule.capture(), name=("processCapture"))
         # processFeature = Process(target = FeatureExtractModule.featureExtract())
         processTest = Process(target=MyTestModule.featureExtract())
         # processCapture.start()
         # processFeature.start()
         processTest.start()
     except KeyboardInterrupt:
-        processCapture.stop()
+        # processCapture.stop()
         # processFeature.stop()
         processTest.stop()
 
-    processCapture.join()
+    # processCapture.join()
     # processFeature.join()
     processTest.join()
